@@ -1,0 +1,208 @@
+---
+title: "心統實習課 - 描述統計(繪圖)"
+author: "WC_Chang"
+date: "2023-10-02"
+output: html_notebook
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+
+```
+
+# 上週今日
+
+-   路徑(path)、工作位置(working directory)和匯入/匯出檔案
+    -   `getwd()`
+    -   `setwd()`
+-   描述統計的一堆函數
+-   有點挑戰的作業
+
+## 上週作業和匯出檔案的補充
+
+-   上週作業其實有很多種作法
+
+```{r }
+dta1 <- read_csv("C:/Users/wcnon/OneDrive/Desktop/Graduate/Statistics_TA/RLab/03_Descriptive_Statistics/fake_data.csv")
+
+## 上週作業
+avg <- c(mean(dta1[dta1$gender == "M", ]$quiz1, na.rm = T),
+          mean(dta1[dta1$gender == "F", ]$quiz1, na.rm = T)
+         )
+sd <- c(sd(dta1[dta1$gender == "M", ]$quiz1, na.rm = T),
+        sd(dta1[dta1$gender == "F", ]$quiz1, na.rm = T))
+des <- data.frame(gender = c("M","F"),
+                  avg.quiz1 = avg,
+                  sd.quiz1 = sd)
+des
+```
+
+### 匯出資料
+
+-   兩種方法
+
+    -   `base` 語法:`write.table()`, `write.csv()`
+
+    -   `readr`套件: `write_csv()`
+
+```{r output, warning=FALSE}
+setwd("C:/Users/wcnon/OneDrive/Desktop/")
+
+#大家好像都抄這個:(
+write.table(des, file="output.csv",
+            col.names = T, row.names = T, sep = ",")
+
+write.table(des, file="output1.csv",
+            col.names = T, row.names = F, sep = ",")
+#另一個
+write.csv(des, file="output2.csv")
+#第三個
+readr::write_csv(des, file="output3.csv")
+
+#txt檔如果你喜歡的話
+write.table(des, file="output.txt",
+            col.names = T,
+            sep = ",")
+```
+
+# 本周要用的套件
+
+`ggplot2`
+
+```{r }
+#install.packages("tidyverse")
+#install.packages("ggplot2")
+library(ggplot2) 
+```
+
+# Iris 資料集
+
+先看看 `iris` 長怎樣
+```{r take a peep of iris}
+?iris
+str(iris)
+head(iris)
+colnames(iris)
+```
+
+# My first plot in ggplot2
+
+-   3 Major components:
+    1.  data, should be `data.frame` format.
+    2.  A set of **aesthetic mappings** between variables in the data and visual properties, and
+    3.  At least one layer which describes how to render each observation. Layers are usually created with a `geom` function.
+
+
+For Example: 
+
+```{r little example}
+ggplot(data = iris, mapping = aes(x = Sepal.Length, y = Sepal.Width)) +
+  geom_point()  #layer_2: type of plot 
+```
+
+## On `aes()`: Colour, shape and size
+
+Try these:
+
+-   `aes(Sepal.Length, Sepal.Width, color = Species)`
+
+-   `aes(Sepal.Length, Sepal.Width, shape = Species)`
+
+# Outline---Single variable X
+
+| 類別變數 (Categorical var.) | 連續變數 (Continuous var.) |
+|:----------------------------|:---------------------------|
+|                             | 直方圖(histogram)          |
+| 長條圖(bar plot)            | 盒鬚圖(box plot)           |
+| ~~圓餅圖(pie chart)~~       | ~~QQ圖(QQ plot)~~          |
+
+## Outline---Multivariate (x,y)
+
+| 資料類型     | 圖                                 |
+|--------------|------------------------------------|
+| 二個類別     | 通常用關聯表 (contingency table)   |
+| 一類別一連續 | 平行盒鬚圖 (side‐by‐side box plot) |
+| 二個連續     | 散佈圖 (scatter plot)              |
+| 三個以上變項 | 以上圖形搭配不同顏色、形狀         |
+
+## bar chart
+
+```{r iris bar}
+ggplot(iris[iris$Sepal.Length>5,], aes(Species))+
+   geom_bar(fill = "darkcyan", width = .5) +
+   labs(title="Observations of Sepal.Length > 5")
+```
+
+## histogram
+
+```{r 2}
+ggplot(iris, aes(Sepal.Width)) +
+  geom_histogram()+
+  labs(title = "default(bins = 30)")# bin 數量
+
+ggplot(iris, aes(Sepal.Width)) +
+  geom_histogram(bins = 5)+
+  labs(title = "set bins = 15")
+```
+
+## boxplot
+
+```{r box}
+ggplot(iris, aes(x=Sepal.Width)) +
+  #stat_boxplot(geom = "errorbar", width =.3)+
+  geom_boxplot() +
+  labs(title = "boxplot of Sepal.Width",
+       x = "Sepal.Width(cm)") + 
+  theme_classic()+
+  theme(axis.text.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.y = element_blank()) #把y軸刪掉
+
+```
+
+## side by side box plot
+
+```{r box2}
+ggplot(iris, aes(x=Sepal.Width, y = Species)) +
+  geom_boxplot(aes(fill = Species), show.legend = F)+
+  labs(title = "boxplots of Sepal.Width by Species")
+```
+
+### Using `graphic` functions
+
+```{r base boxplot}
+boxplot(Sepal.Width ~ Species, data =iris, horizontal = T)
+```
+
+## Scatter plot
+
+```{r}
+g1 <- ggplot(iris, aes(x = Sepal.Length, y = Sepal.Width))
+g1 + geom_point()
+g1 + geom_point(aes(color = Species, shape = Species)) +
+  labs(title = "Scatter plot of Sepal.Width, Sepal.Length by Species")
+```
+
+## Lastly, back to `graphic` plotting functions
+
+-   One can easily draw a plot without constructing a `data.frame` object.
+
+```{r baser}
+# par(mfrow = c(2, 1))
+barplot(table(iris$Species), ylab="count", main = "barplot")
+hist(iris$Sepal.Width, breaks = 20, main = "historgram",xlim = c(2,4.5))
+boxplot(iris$Sepal.Width, main = "boxplot", horizontal = T)
+plot(iris$Sepal.Width, iris$Sepal.Length, main = "scatterplot")
+```
+
+# Exercise 
+
+```{r}
+sca <- ggplot(iris, aes(Petal.Length, Petal.Width)) +
+  geom_point(aes(color = Species, shape = Species),#size =2,
+             position = position_jitter(seed = 87))
+sca + labs(title = "張瑋宸", tag = "A")
+
+# ggsave("figures/hw.png", plot = sca)
+```
